@@ -20,6 +20,23 @@ table = next(soup.find(id="quote-leaf-comp").children)
 # Exclude the headers
 statement = next(next(list(table)[2].children).children)
 
+# Raw data
+# Extract and work with it later
+# 2d list
+data = []
+
 for row in statement.children:
-    # extract info
-#//*[@id="quote-leaf-comp"]/section/div[3]/table/tbody/tr[1]/td[1]/span
+    # Extract info
+    data.append([])
+    for entry in row.children:
+        # For each column entry
+        value = entry.string
+        try:
+            # Strip comma
+            value = float(value.replace(",", ""))
+        except ValueError:
+            pass
+        data[-1].append(value) 
+
+for row in data:
+    print(row)
