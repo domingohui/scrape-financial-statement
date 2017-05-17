@@ -2,29 +2,38 @@
 
 from bs4 import BeautifulSoup
 import requests
-from . import csv_output
+from csv_output import to_csv
+import sys
 
 YAHOO_BASE_URL = "https://finance.yahoo.com/quote/"
+
+def try_get_request(URL):
+    try:
+        page = requests.get(URL)
+        return page
+    except:
+        print("Make sure you have the correct symbol and internet connection.")
+        sys.exit(0)
 
 def fetch_cash_flow(SYMBOL):
     URL = YAHOO_BASE_URL + SYMBOL + "/cash-flow"
     # Fetch page source
-    page = requests.get(URL)
+    page = try_get_request(URL)
     return SYMBOL, "Cash Flow", parse_raw_statement_data(page.content)
 
 
 def fetch_balance_sheet(SYMBOL):
     URL = YAHOO_BASE_URL + SYMBOL + "/balance-sheet"
     # Fetch page source
-    page = requests.get(URL)
-    return parse_raw_statement_data(page.content)
+    page = try_get_request(URL)
+    return SYMBOL, "Balance Sheet", parse_raw_statement_data(page.content)
 
 
 def fetch_income_statement(SYMBOL):
     URL = YAHOO_BASE_URL + SYMBOL + "/financials"
     # Fetch page source
-    page = requests.get(URL)
-    return parse_raw_statement_data(page.content)
+    page = try_get_request(URL)
+    return SYMBOL, "Income", parse_raw_statement_data(page.content)
 
 
 def infer_dollar_multiplier(string):
@@ -85,9 +94,7 @@ def parse_raw_statement_data (table_page_source):
 
 
 if __name__ == "__main__":
-    to_csv(fetch_cash_flow("AAPL"))
-    '''
-    print(fetch_cash_flow("AAPL"))
-    print(fetch_balance_sheet("AAPL"))
-    print(fetch_income_statement("AAPL"))
-    '''
+    #to_csv(fetch_cash_flow("FIT"))
+    #to_csv(fetch_balance_sheet("TSLA"))
+    #to_csv(fetch_income_statement("FB"))
+    to_csv(fetch_income_statement("xx"))
