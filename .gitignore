@@ -1,5 +1,6 @@
 # Local temp file for testing
 page_source
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
