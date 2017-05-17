@@ -2,7 +2,7 @@
 
 from bs4 import BeautifulSoup
 import requests
-
+from . import csv_output
 
 YAHOO_BASE_URL = "https://finance.yahoo.com/quote/"
 
@@ -10,34 +10,55 @@ def fetch_cash_flow(SYMBOL):
     URL = YAHOO_BASE_URL + SYMBOL + "/cash-flow"
     # Fetch page source
     page = requests.get(URL)
-    return parse_raw_statement_data(BeautifulSoup(page.content, "html.parser"))
+    return SYMBOL, "Cash Flow", parse_raw_statement_data(page.content)
 
 
 def fetch_balance_sheet(SYMBOL):
     URL = YAHOO_BASE_URL + SYMBOL + "/balance-sheet"
     # Fetch page source
     page = requests.get(URL)
-    return parse_raw_statement_data(BeautifulSoup(page.content, "html.parser"))
+    return parse_raw_statement_data(page.content)
 
 
 def fetch_income_statement(SYMBOL):
     URL = YAHOO_BASE_URL + SYMBOL + "/financials"
     # Fetch page source
     page = requests.get(URL)
-    return parse_raw_statement_data(BeautifulSoup(page.content, "html.parser"))
+    return parse_raw_statement_data(page.content)
 
+
+def infer_dollar_multiplier(string):
+    '''
+    string: string
+
+    returns: int
+    '''
+
+    if "thousands" in string:
+        return 1000
+    if "millions" in string:
+        return 1000000
+    return 1
  
 def parse_raw_statement_data (table_page_source):
+    '''
+    parse raw HTML
+    table_page_source: string
+
+    returns: [ [...], ... ]
+    '''
+    soup = BeautifulSoup(table_page_source, "html.parser")
+
+    # Get the first <section> of the table - the meaty stuff
+    table = list(next(soup.find(id="quote-leaf-comp").children))
+
+    # Extract dollar unit multiplier
+    metadata = table[1]
     # e.g. MULTIPLIER = 1000 if statement is quoted in thousands
-    MULTIPLIER = 1
-
-    # Get the first <section> tag of the table - the meaty stuff
-    table = next(table_page_source.find(id="quote-leaf-comp").children)
-
-    # TODO: Extract numeric unit multiplier
+    MULTIPLIER = max(infer_dollar_multiplier(s) for s in metadata.strings)
 
     # Exclude the meta info in headers
-    statement = next(next(list(table)[2].children).children)
+    statement = next(next(table[2].children).children)
 
     # Raw data in dollar value
     # Extract and work with it later
@@ -62,7 +83,11 @@ def parse_raw_statement_data (table_page_source):
 
     return data
 
+
 if __name__ == "__main__":
+    to_csv(fetch_cash_flow("AAPL"))
+    '''
     print(fetch_cash_flow("AAPL"))
     print(fetch_balance_sheet("AAPL"))
     print(fetch_income_statement("AAPL"))
+    '''
